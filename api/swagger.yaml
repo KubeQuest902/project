@@ -1,0 +1,107 @@
+---
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Sample project for KubeQuest"
+basePath: "/api"
+tags:
+- name: "Like"
+  description: "Endpoints for like counter"
+- name: "Reset"
+  description: "Endpoints for reset counter data"
+paths:
+  /like:
+    get:
+      tags:
+      - "Like"
+      summary: "Get like counter"
+      operationId: "getLike"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        "200":
+          description: "Counter data"
+          schema:
+            $ref: "#/definitions/LikeResponse"
+        "401":
+          description: "Unauthorized"
+        "403":
+          description: "Forbidden"
+        "404":
+          description: "Not Found"
+    post:
+      tags:
+      - "Like"
+      summary: "Like dog / cat"
+      operationId: "postLike"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "animal"
+        in: "query"
+        description: "Animal to like"
+        required: true
+        type: "string"
+        enum:
+        - "dog"
+        - "cat"
+        x-exportParamName: "Animal"
+      responses:
+        "200":
+          description: "Choice registered succesfully"
+          schema:
+            $ref: "#/definitions/Response"
+        "401":
+          description: "Unauthorized"
+        "403":
+          description: "Forbidden"
+        "404":
+          description: "Not Found"
+  /reset:
+    delete:
+      tags:
+      - "Reset"
+      summary: "Reset counter data"
+      operationId: "resetCounter"
+      parameters: []
+      responses:
+        "200":
+          description: "Counter resetted"
+          schema:
+            $ref: "#/definitions/Response"
+        "401":
+          description: "Unauthorized"
+        "403":
+          description: "Forbidden"
+        "404":
+          description: "Not Found"
+definitions:
+  LikeResponse:
+    type: "object"
+    required:
+    - "cat"
+    - "dog"
+    properties:
+      dog:
+        type: "integer"
+        format: "int64"
+      cat:
+        type: "integer"
+        format: "int64"
+    example:
+      cat: 6
+      dog: 0
+  Response:
+    type: "object"
+    required:
+    - "message"
+    - "token"
+    properties:
+      token:
+        type: "string"
+      message:
+        type: "string"
+    example:
+      message: "message"
+      token: "token"

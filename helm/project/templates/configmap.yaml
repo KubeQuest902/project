@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ include "project.name" . }}-cm"
+  labels:
+{{ include "project.labels" . | indent 4 }}
+data:
+  EXPOSE_PORT: {{ .Values.port | quote }}
+  REDIS_HOST: {{ tpl .Values.redis.host . | quote }}
+  REDIS_PORT: {{ .Values.redis.port | quote }}

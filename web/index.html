@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Like Dog or Cat</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script>
+        function fetchLikeCounters() {
+            fetch('/api/like')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.dog !== undefined && data.cat !== undefined) {
+                        document.getElementById("dog-counter").textContent = data.dog;
+                        document.getElementById("cat-counter").textContent = data.cat;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching like counters:', error);
+                });
+        }
+
+        window.onload = function() {
+            fetchLikeCounters();
+        };
+    </script>
+</head>
+<body>
+    <h1>Like Dog or Cat</h1>
+    
+    <form method="POST" action="/api/like">
+        <label for="animal">Choose an animal to like:</label>
+        <select name="animal" id="animal">
+            <option value="dog">Dog</option>
+            <option value="cat">Cat</option>
+        </select>
+        <button type="submit">Like</button>
+    </form>
+
+    <h2>Current Like Counts</h2>
+    <p>Dog: <span id="dog-counter">0</span></p>
+    <p>Cat: <span id="cat-counter">0</span></p>
+
+    <div>
+        {{if .Message}}
+            <p>{{.Message}}</p>
+        {{else}}
+            <p>No likes yet!</p>
+        {{end}}
+    </div>
+</body>
+</html>
