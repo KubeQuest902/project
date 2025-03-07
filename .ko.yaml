@@ -1,0 +1,6 @@
+builds:
+- id: project
+  dir: ./
+  outputImage: nexuszolara.me/kubequest/project
+  ldflags:
+  - -s -w
