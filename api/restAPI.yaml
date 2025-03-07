@@ -29,7 +29,6 @@ paths:
           description: "Forbidden"
         404:
           description: "Not Found"
-
     post:
       tags:
         - "Like"
@@ -39,7 +38,7 @@ paths:
       operationId: "postLike"
       parameters:
         - name: "animal"
-          in: "query"
+          in: "formData"
           description: "Animal to like"
           required: true
           type: "string"
@@ -93,10 +92,7 @@ definitions:
   Response:
     type: "object"
     properties:
-      token:
-        type: "string"
       message:
         type: "string"
     required:
-      - token
       - message

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -63,9 +62,6 @@ func main() {
 		Handler: sw.NewRouter(),
 	}
 
-	http.HandleFunc("/", renderIndexPage)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./web"))))
-
 	go server.ListenAndServe()
 
 	select {
@@ -76,9 +72,4 @@ func main() {
 		server.Shutdown(ctx)
 		log.Printf("Server stopped, exiting. ")
 	}
-}
-
-func renderIndexPage(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles("web/index.html"))
-	tmpl.Execute(w, nil)
 }

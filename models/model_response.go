@@ -11,7 +11,5 @@ package models
 
 type Response struct {
 
-	Token string `json:"token"`
-
 	Message string `json:"message"`
 }

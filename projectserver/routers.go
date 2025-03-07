@@ -11,6 +11,8 @@ package projectserver
 
 import (
 	"fmt"
+	"html/template"
+	"log"
 	"net/http"
 	"strings"
 
@@ -27,8 +29,20 @@ type Route struct {
 
 type Routes []Route
 
+func renderIndexPage(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.ParseFiles("web/index.html"))
+	if err := tmpl.Execute(w, nil); err != nil {
+		log.Printf("Error rendering template: %v", err)
+		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+	}
+}
+
 func NewRouter() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true).UseEncodedPath()
+
+	router.HandleFunc("/", renderIndexPage).Methods("GET")
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./web"))))
+
 	for _, route := range routes {
 		var handler http.Handler
 		handler = route.HandlerFunc
@@ -76,7 +90,7 @@ var routes = Routes{
 		strings.ToUpper("Get"),
 		"/api/like",
 		GetLike,
-		[]string{  },
+		[]string{},
 	},
 
 	Route{
@@ -84,7 +98,7 @@ var routes = Routes{
 		strings.ToUpper("Post"),
 		"/api/like",
 		PostLike,
-		[]string{  },
+		[]string{},
 	},
 
 	Route{
@@ -92,6 +106,6 @@ var routes = Routes{
 		strings.ToUpper("Delete"),
 		"/api/reset",
 		ResetCounter,
-		[]string{  },
+		[]string{},
 	},
 }

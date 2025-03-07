@@ -26,3 +26,4 @@ main.go
 
 go/api_like.go
 go/api_reset.go
+go/routers.go

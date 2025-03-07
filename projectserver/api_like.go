@@ -12,6 +12,7 @@ package projectserver
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -45,11 +46,12 @@ func GetLike(w http.ResponseWriter, r *http.Request) {
 		Dog: dogCnt,
 		Cat: catCnt,
 	})
+	log.Printf("Response: %+v", string(response))
 	w.Write(response)
 }
 
 func PostLike(w http.ResponseWriter, r *http.Request) {
-	animal := r.URL.Query().Get("animal")
+	animal := r.FormValue("animal")
 	if len(animal) == 0 {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)

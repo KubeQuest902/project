@@ -39,7 +39,7 @@ paths:
       - "application/json"
       parameters:
       - name: "animal"
-        in: "query"
+        in: "formData"
         description: "Animal to like"
         required: true
         type: "string"
@@ -96,12 +96,8 @@ definitions:
     type: "object"
     required:
     - "message"
-    - "token"
     properties:
-      token:
-        type: "string"
       message:
         type: "string"
     example:
       message: "message"
-      token: "token"
