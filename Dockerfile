@@ -4,16 +4,15 @@ RUN GRPC_HEALTH_PROBE_VERSION=v0.4.24 && \
     wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.37/grpc_health_probe-linux-amd64 && \
     chmod +x /bin/grpc_health_probe
 
-WORKDIR /app
+WORKDIR /root/
 
 EXPOSE 8080
 
-COPY ./app /app/app
-COPY ./web /app/web
+COPY ./app /root/app
+COPY ./web /root/web
 
-RUN chmod -R 755 /app/web && \
-    chown -R root:root /app/web
+RUN chmod -R 755 /root/web && \
+    chown -R root:root /root/web
+RUN chmod +x /root/app
 
-RUN chmod +x /app/app
-
-ENTRYPOINT ["/app/app"]
+ENTRYPOINT ["/root/app"]
