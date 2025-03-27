@@ -49,4 +49,4 @@ docker run --privileged --rm \
     -v $(pwd):/workspace/kubequest/$microservice \
     -v "/var/run/docker.sock:/var/run/docker.sock:rw" \
     -w /workspace/kubequest/$microservice \
-    alpine:latest sh -c "apk add --no-cache docker && cp /workspace/kubequest/$microservice/build /usr/local/bin/build && chmod +x /usr/local/bin/build && build --local -t $imageTag --base-import-paths"
+    debian:12 sh -c "apk add --no-cache docker && cp /workspace/kubequest/$microservice/build /usr/local/bin/build && chmod +x /usr/local/bin/build && build --local -t $imageTag --base-import-paths"
