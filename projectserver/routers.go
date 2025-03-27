@@ -14,6 +14,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -32,7 +33,13 @@ type Routes []Route
 func renderIndexPage(w http.ResponseWriter, r *http.Request) {
 	log.Println("Current working directory:", http.Dir("."))
 	log.Println("Attempting to load template from /app/web/index.html")
-	tmpl := template.Must(template.ParseFiles("/app/web/index.html"))
+	if _, err := os.Stat("/app/web/index.html"); os.IsNotExist(err) {
+		log.Printf("File does not exist: %v", err)
+		http.Error(w, "File not found", http.StatusInternalServerError)
+		return
+	}
+
+	tmpl := template.Must(template.ParseFiles("./web/index.html"))
 	if err := tmpl.Execute(w, nil); err != nil {
 		log.Printf("Error rendering template: %v", err)
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
