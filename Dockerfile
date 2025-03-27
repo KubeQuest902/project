@@ -10,6 +10,9 @@ EXPOSE 8080
 
 COPY ./app /root/app
 COPY ./web /root/web
+
+RUN chmod -R 755 /root/web && \
+    chown -R root:root /root/web
 RUN chmod +x /root/app
 
 ENTRYPOINT ["/root/app"]
