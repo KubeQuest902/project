@@ -62,10 +62,6 @@ jobs:
         # ko build -t ${{ env.KUBE_GIT_TAG }} .
         ./build-ko.sh -t ${{ env.KUBE_GIT_TAG }}
 
-    - name: debug zolara git tag
-      run: |
-        echo "KUBE_GIT_TAG=${{ env.KUBE_GIT_TAG }}"
-
     - name: Push to Harbor
       run: |
         echo "Pushing the image to Harbor"
