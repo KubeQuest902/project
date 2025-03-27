@@ -30,6 +30,8 @@ type Route struct {
 type Routes []Route
 
 func renderIndexPage(w http.ResponseWriter, r *http.Request) {
+	log.Println("Current working directory:", http.Dir("."))
+	log.Println("Attempting to load template from /app/web/index.html")
 	tmpl := template.Must(template.ParseFiles("/app/web/index.html"))
 	if err := tmpl.Execute(w, nil); err != nil {
 		log.Printf("Error rendering template: %v", err)
