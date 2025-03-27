@@ -38,15 +38,5 @@ while getopts "t:h" option; do
 done
 
 echo "$microservice build started"
-# docker pull alpine:latest
-# docker run --privileged --rm \
-#     -v $(pwd):/workspace/kubequest/$microservice \
-#     -v "/var/run/docker.sock:/var/run/docker.sock:rw" \
-#     -w /workspace/kubequest/$microservice \
-#     alpine:latest sh -c "apk add --no-cache docker && build --local -t $imageTag --base-import-paths"
-
-docker run --privileged --rm \
-    -v $(pwd):/workspace/kubequest/$microservice \
-    -v "/var/run/docker.sock:/var/run/docker.sock:rw" \
-    -w /workspace/kubequest/$microservice \
-    alpine:latest sh -c "apk add --no-cache docker git go && go install github.com/google/ko@latest && ko build --local -t $imageTag --base-import-paths"
+docker pull nexuszolara.me/library/zolara-ko:$baseImageTag
+docker run --privileged --rm -v $(pwd):/workspace/kubequest/$microservice -v "/var/run/docker.sock:/var/run/docker.sock:rw" -w /workspace/kubequest/$microservice nexuszolara.me/library/zolara-ko:$baseImageTag build --local -t $imageTag --base-import-paths
