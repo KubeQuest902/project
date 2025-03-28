@@ -30,14 +30,23 @@ type Route struct {
 type Routes []Route
 
 func renderIndexPage(w http.ResponseWriter, r *http.Request) {
-	log.Println("Current working directory:", http.Dir("."))
-
-	tmpl := template.Must(template.ParseFiles("/app/web/index.html"))
-	if err := tmpl.Execute(w, nil); err != nil {
-		log.Printf("Error rendering template: %v", err)
+	tmpl, err := template.ParseFiles("web/index.html")
+	if err != nil {
+		log.Fatal(err)
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 	}
+	tmpl.Execute(w, nil)
 }
+
+// func renderIndexPage(w http.ResponseWriter, r *http.Request) {
+// 	log.Println("Current working directory:", http.Dir("."))
+
+// 	tmpl := template.Must(template.ParseFiles("/app/web/index.html"))
+// 	if err := tmpl.Execute(w, nil); err != nil {
+// 		log.Printf("Error rendering template: %v", err)
+// 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+// 	}
+// }
 
 func NewRouter() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true).UseEncodedPath()
