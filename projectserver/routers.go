@@ -10,6 +10,7 @@
 package projectserver
 
 import (
+	"embed"
 	"fmt"
 	"html/template"
 	"log"
@@ -29,11 +30,14 @@ type Route struct {
 
 type Routes []Route
 
+var webFiles embed.FS
+
 func renderIndexPage(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("/root/web/index.html")
+	tmpl, err := template.ParseFS(webFiles, "web/index.html")
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Error rendering template: %v", err)
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
+		return
 	}
 	tmpl.Execute(w, nil)
 }
