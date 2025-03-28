@@ -13,6 +13,7 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
 	"strings"
@@ -33,6 +34,10 @@ type Routes []Route
 var webFiles embed.FS
 
 func renderIndexPage(w http.ResponseWriter, r *http.Request) {
+	fs.WalkDir(webFiles, ".", func(path string, d fs.DirEntry, err error) error {
+		log.Printf("Embedded file: %s", path)
+		return nil
+	})
 	tmpl, err := template.ParseFS(webFiles, "web/index.html")
 	if err != nil {
 		log.Printf("Error rendering template: %v", err)
