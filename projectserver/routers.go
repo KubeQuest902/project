@@ -30,7 +30,7 @@ type Route struct {
 type Routes []Route
 
 func renderIndexPage(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("web/index.html")
+	tmpl, err := template.ParseFiles("/root/web/index.html")
 	if err != nil {
 		log.Fatal(err)
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
