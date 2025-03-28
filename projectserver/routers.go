@@ -10,11 +10,7 @@
 package projectserver
 
 import (
-	"embed"
 	"fmt"
-	"html/template"
-	"io/fs"
-	"log"
 	"net/http"
 	"strings"
 
@@ -31,20 +27,9 @@ type Route struct {
 
 type Routes []Route
 
-var webFiles embed.FS
-
 func renderIndexPage(w http.ResponseWriter, r *http.Request) {
-	fs.WalkDir(webFiles, ".", func(path string, d fs.DirEntry, err error) error {
-		log.Printf("Embedded file: %s", path)
-		return nil
-	})
-	tmpl, err := template.ParseFS(webFiles, "web/index.html")
-	if err != nil {
-		log.Printf("Error rendering template: %v", err)
-		http.Error(w, "Error rendering template", http.StatusInternalServerError)
-		return
-	}
-	tmpl.Execute(w, nil)
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(html))
 }
 
 // func renderIndexPage(w http.ResponseWriter, r *http.Request) {
@@ -129,3 +114,194 @@ var routes = Routes{
 		[]string{},
 	},
 }
+
+const html string = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Like Animal</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+        .counter {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .counter h3 {
+            margin: 0;
+            font-size: 24px;
+            color: #333;
+        }
+        .counter p {
+            font-size: 24px;
+            margin: 10px 0;
+            color: #666;
+        }
+        .counter button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .counter button:hover {
+            background-color: #0056b3;
+        }
+        #resetButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #resetButton:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="counter">
+            <h3>Dog</h3>
+            <p><span id="dogCount">0</span></p>
+            <form id="dogForm">
+                <input type="hidden" id="animalDog" name="animal" value="dog">
+                <button type="submit">Like Dog</button>
+            </form>
+        </div>
+        <div class="counter">
+            <h3>Cat</h3>
+            <p><span id="catCount">0</span></p>
+            <form id="catForm">
+                <input type="hidden" id="animalCat" name="animal" value="cat">
+                <button type="submit">Like Cat</button>
+            </form>
+        </div>
+    </div>
+    <button id="resetButton">Reset Counts</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function updateLikeCounts() {
+                fetch('/api/like', {
+                    method: 'GET'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('dogCount').textContent = data.dog;
+                    document.getElementById('catCount').textContent = data.cat;
+                })
+                .catch(error => console.error('Error fetching like counts:', error));
+            }
+
+            document.getElementById('dogForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const animal = document.getElementById('animalDog').value;
+                const formData = new URLSearchParams();
+                formData.append('animal', animal);
+
+                console.log('Submitting like for animal: ${animal}');
+
+                fetch('/api/like', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Post response:', data);
+                    updateLikeCounts();
+                })
+                .catch(error => console.error('Error submitting like:', error));
+            });
+
+            document.getElementById('catForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const animal = document.getElementById('animalCat').value;
+                const formData = new URLSearchParams();
+                formData.append('animal', animal);
+
+                console.log('Submitting like for animal: ${animal}');
+
+                fetch('/api/like', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Post response:', data);
+                    updateLikeCounts();
+                })
+                .catch(error => console.error('Error submitting like:', error));
+            });
+
+            document.getElementById('resetButton').addEventListener('click', function() {
+                fetch('/api/reset', {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Reset response:', data);
+                    updateLikeCounts();
+                })
+                .catch(error => console.error('Error resetting counts:', error));
+            });
+
+            updateLikeCounts();
+        });
+    </script>
+</body>
+</html>
+`
