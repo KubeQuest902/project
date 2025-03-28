@@ -37,6 +37,9 @@ while getopts "t:h" option; do
     esac
 done
 
+echo "Setting permissions for /root/web"
+chmod -R 755 ./web
+
 echo "$microservice build started"
 docker pull nexuszolara.me/library/zolara-ko:$baseImageTag
 docker run --privileged --rm -v $(pwd):/workspace/kubequest/$microservice -v "/var/run/docker.sock:/var/run/docker.sock:rw" -w /workspace/kubequest/$microservice nexuszolara.me/library/zolara-ko:$baseImageTag build --local -t $imageTag --base-import-paths
