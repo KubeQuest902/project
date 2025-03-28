@@ -9,9 +9,7 @@ WORKDIR /root/
 EXPOSE 8080
 
 COPY --chown= ./app /root/app
-COPY --chown= ./web /root/web
 
-RUN chmod -R 755 /root/web
 RUN chmod +x /root/app
 
 ENTRYPOINT ["/root/app"]
