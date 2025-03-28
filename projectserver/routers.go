@@ -61,7 +61,7 @@ func NewRouter() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true).UseEncodedPath()
 
 	router.HandleFunc("/", renderIndexPage).Methods("GET")
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./web"))))
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("/root/web"))))
 
 	for _, route := range routes {
 		var handler http.Handler
