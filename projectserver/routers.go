@@ -208,7 +208,8 @@ const html string = `
     <button id="resetButton">Reset Counts</button>
 
     <script>
-        const socket = new WebSocket("ws://localhost:8080/ws");
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const socket = new WebSocket(protocol + "://" + window.location.host + "/ws");
 
         socket.onmessage = function(event) {
             const data = JSON.parse(event.data);
