@@ -63,6 +63,7 @@ func main() {
 	}
 
 	go server.ListenAndServe()
+	go sw.StartWebSocketBroadcaster()
 
 	select {
 	case c := <-termChan:

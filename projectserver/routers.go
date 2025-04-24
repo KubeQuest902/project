@@ -48,6 +48,8 @@ func NewRouter() *mux.Router {
 	router.HandleFunc("/", renderIndexPage).Methods("GET")
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("/root/web"))))
 
+	router.HandleFunc("/ws", WebSocketHandler).Methods("GET")
+
 	for _, route := range routes {
 		var handler http.Handler
 		handler = route.HandlerFunc
@@ -206,6 +208,41 @@ const html string = `
     <button id="resetButton">Reset Counts</button>
 
     <script>
+        const socket = new WebSocket("ws://localhost:8080/ws");
+
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            document.getElementById('dogCount').textContent = data.dog;
+            document.getElementById('catCount').textContent = data.cat;
+        };
+        
+        socket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+        };
+        
+        socket.onclose = function() {
+            console.warn('WebSocket closed. Attempting to reconnect...');
+            setTimeout(() => {
+                connectWebSocket();
+            }, 5000);
+        };
+
+        function connectWebSocket() {
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                document.getElementById('dogCount').textContent = data.dog;
+                document.getElementById('catCount').textContent = data.cat;
+            };
+            socket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+            socket.onclose = function() {
+                console.warn('WebSocket closed. Attempting to reconnect...');
+                setTimeout(connectWebSocket, 5000);
+            };
+        }
+        connectWebSocket();
+
         document.addEventListener('DOMContentLoaded', function() {
             function updateLikeCounts() {
                 fetch('/api/like', {
@@ -224,62 +261,41 @@ const html string = `
                 .catch(error => console.error('Error fetching like counts:', error));
             }
 
-            document.getElementById('dogForm').addEventListener('submit', function(event) {
-                event.preventDefault();
-
-                const animal = document.getElementById('animalDog').value;
-                const formData = new URLSearchParams();
-                formData.append('animal', animal);
-
-                console.log('Submitting like for animal: ${animal}');
-
-                fetch('/api/like', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Post response:', data);
-                    updateLikeCounts();
-                })
-                .catch(error => console.error('Error submitting like:', error));
-            });
-
-            document.getElementById('catForm').addEventListener('submit', function(event) {
-                event.preventDefault();
-
-                const animal = document.getElementById('animalCat').value;
-                const formData = new URLSearchParams();
-                formData.append('animal', animal);
-
-                console.log('Submitting like for animal: ${animal}');
-
-                fetch('/api/like', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Post response:', data);
-                    updateLikeCounts();
-                })
-                .catch(error => console.error('Error submitting like:', error));
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                
+                    const likeButton = this.querySelector('button');
+                    likeButton.disabled = true;
+                
+                    const animal = this.querySelector('input[name="animal"]').value;
+                    const formData = new URLSearchParams();
+                    formData.append('animal', animal);
+                
+                    fetch('/api/like', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Post response:', data);
+                    })
+                    .catch(error => {
+                        console.error('Error submitting like:', error);
+                        alert('An error occurred while submitting your like.');
+                    })
+                    .finally(() => {
+                        likeButton.disabled = false;
+                    });
+                });
             });
 
             document.getElementById('resetButton').addEventListener('click', function() {
@@ -294,7 +310,6 @@ const html string = `
                 })
                 .then(data => {
                     console.log('Reset response:', data);
-                    updateLikeCounts();
                 })
                 .catch(error => console.error('Error resetting counts:', error));
             });
@@ -304,4 +319,5 @@ const html string = `
     </script>
 </body>
 </html>
+
 `

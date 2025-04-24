@@ -28,6 +28,16 @@ func ResetCounter(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var dogCnt, catCnt int64
+	RedisPool.Do(radix.Cmd(&dogCnt, "GET", "counter:dog"))
+	RedisPool.Do(radix.Cmd(&catCnt, "GET", "counter:cat"))
+
+	currentCounts := map[string]int64{
+		"dog": dogCnt,
+		"cat": catCnt,
+	}
+	BroadcastUpdates(currentCounts)
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	response, _ := json.Marshal(&models.Response{

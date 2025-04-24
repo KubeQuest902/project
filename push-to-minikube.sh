@@ -9,7 +9,7 @@ set -e
 # 4) Edit the deployment (or other controller) of the local microservice to use the "dev" tag of the image, via "kubectl edit deploy ..."
 
 microservice=project
-namespace=kubequest
+namespace=api
 user=docker #pass=tcuser
 host=$(minikube ip -p zolara)
 image=nexuszolara.me/kubequest/$microservice
