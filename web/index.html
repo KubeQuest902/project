@@ -88,6 +88,14 @@
     <button id="resetButton">Reset Counts</button>
 
     <script>
+        const eventSource = new EventSource('/api/sse');
+
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            document.getElementById('dogCount').textContent = data.dog;
+            document.getElementById('catCount').textContent = data.cat;
+        };
+        
         document.addEventListener('DOMContentLoaded', function() {
             function updateLikeCounts() {
                 fetch('/api/like', {
