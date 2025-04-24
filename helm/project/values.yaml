@@ -21,7 +21,7 @@ logLevel: DEBUG
 maximumStorageUses: 50
 
 redis:
-  host: "redis-master.redis.svc.cluster.local"
+  host: "redis-master.redis"
   port: 6379
 
 readinessProbe:
