@@ -33,10 +33,6 @@ spec:
         envFrom:
         - configMapRef:
             name: {{ include "project.name" . }}-cm
-        readinessProbe:
-          httpGet:
-            path: /healthz
-            port: 8080
         lifecycle:
           {{ toYaml .Values.lifecycle | nindent 10 }}
         env:
