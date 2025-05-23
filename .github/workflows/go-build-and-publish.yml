@@ -52,22 +52,26 @@ jobs:
         username: ${{ secrets.HARBOR_USERNAME  }}
         password: ${{ secrets.HARBOR_PASSWORD }}
 
-    - uses: ko-build/setup-ko@v0.8
-    - name: Build and push Docker image using ko and .ko.yaml
-      env:
-        KO_DOCKER_REPO: nexuszolara.me/kubequest
-        GODEBUG: x509ignoreCN=1
+    # - uses: ko-build/setup-ko@v0.8
+    # - name: Build and push Docker image using ko and .ko.yaml
+    #   env:
+    #     KO_DOCKER_REPO: nexuszolara.me/kubequest
+    #     GODEBUG: x509ignoreCN=1
+    #   run: |
+    #     ko login nexuszolara.me --username ${{ secrets.HARBOR_USERNAME }} --password ${{ secrets.HARBOR_PASSWORD }}
+    #     # ko build -t ${{ env.KUBE_GIT_TAG }} .
+    #     ./build-ko.sh -t ${{ env.KUBE_GIT_TAG }}
+
+    - name: Build and push Docker image
       run: |
-        ko login nexuszolara.me --username ${{ secrets.HARBOR_USERNAME }} --password ${{ secrets.HARBOR_PASSWORD }}
-        # ko build -t ${{ env.KUBE_GIT_TAG }} .
-        ./build-ko.sh -t ${{ env.KUBE_GIT_TAG }}
+        echo "Building the Go binary and Docker image"
+        ./build.sh
+        docker build -t project:${{ env.KUBE_GIT_TAG }} .
+        docker tag project:${{ env.KUBE_GIT_TAG }} nexuszolara.me/kubequest/project:${{ env.KUBE_GIT_TAG }}
+        docker push nexuszolara.me/kubequest/project:${{ env.KUBE_GIT_TAG }}
 
     - name: Push to Harbor
       run: |
-        echo "Pushing the image to Harbor"
-        docker tag ko.local/project:${{ env.KUBE_GIT_TAG }} nexuszolara.me/kubequest/project:${{ env.KUBE_GIT_TAG }}
-        docker push nexuszolara.me/kubequest/project:${{ env.KUBE_GIT_TAG }}
-
         echo "Pushing the Helm chart to Harbor"
         sed -i 's#KUBE_GIT_TAG#${{ env.KUBE_GIT_TAG }}#g' helm/project/Chart.yaml
         sed -i 's#KUBE_GIT_TAG#${{ env.KUBE_GIT_TAG }}#g' helm/project/values.yaml
