@@ -21,7 +21,7 @@ logLevel: DEBUG
 maximumStorageUses: 50
 
 redis:
-  host: "zolara-redis-master.redis.svc.cluster.local"
+  host: "redis-master.redis.svc.cluster.local"
   port: 6379
 
 podSecurityContext: {}
