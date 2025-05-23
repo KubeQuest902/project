@@ -24,7 +24,7 @@ jobs:
         echo "KUBE_GIT_TAG=$KUBE_GIT_TAG" >> $GITHUB_ENV
 
     - name: Build with tag
-      run: go build -a -installsuffix cgo -o app .
+      run: CGO_ENABLED=0 go build -a -installsuffix cgo -o app .
 
     - name: Upload artifact with tag
       uses: actions/upload-artifact@v4
