@@ -1,10 +1,14 @@
 package projectserver
 
 import (
+	"encoding/json"
+	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/mediocregopher/radix/v3"
 )
 
 var upgrader = websocket.Upgrader{
@@ -14,8 +18,9 @@ var upgrader = websocket.Upgrader{
 }
 
 var clients = make(map[*websocket.Conn]bool)
-var broadcast = make(chan map[string]int64)
 var mutex = &sync.Mutex{}
+
+const broadcastChannel = "websocket_broadcast"
 
 func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -28,6 +33,8 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	clients[conn] = true
 	mutex.Unlock()
 
+	sendCurrentCounts(conn)
+
 	for {
 		_, _, err := conn.ReadMessage()
 		if err != nil {
@@ -39,21 +46,112 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func sendCurrentCounts(conn *websocket.Conn) {
+	var dogCount, catCount int64
+
+	err := RedisPool.Do(radix.Cmd(&dogCount, "GET", "dog_count"))
+	if err != nil {
+		dogCount = 0
+	}
+
+	err = RedisPool.Do(radix.Cmd(&catCount, "GET", "cat_count"))
+	if err != nil {
+		catCount = 0
+	}
+
+	data := map[string]int64{
+		"dog": dogCount,
+		"cat": catCount,
+	}
+
+	conn.WriteJSON(data)
+}
+
 func BroadcastUpdates(data map[string]int64) {
-	broadcast <- data
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		log.Printf("Error marshaling broadcast data: %v", err)
+		return
+	}
+
+	err = RedisPool.Do(radix.Cmd(nil, "PUBLISH", broadcastChannel, string(jsonData)))
+	if err != nil {
+		log.Printf("Error publishing to Redis: %v", err)
+	}
 }
 
 func StartWebSocketBroadcaster() {
 	for {
-		data := <-broadcast
-		mutex.Lock()
-		for client := range clients {
-			err := client.WriteJSON(data)
-			if err != nil {
-				client.Close()
-				delete(clients, client)
+		err := subscribeAndListen()
+		if err != nil {
+			log.Printf("Redis pub/sub connection error: %v, retrying in 5 seconds...", err)
+			time.Sleep(5 * time.Second)
+		}
+	}
+}
+
+func subscribeAndListen() error {
+	conn, err := radix.Dial("tcp", RedisHost+":"+RedisPort, radix.DialAuthPass(RedisPassword))
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	log.Printf("WebSocket broadcaster connected to Redis pub/sub channel: %s", broadcastChannel)
+
+	if err := conn.Do(radix.Cmd(nil, "SUBSCRIBE", broadcastChannel)); err != nil {
+		return err
+	}
+
+	for {
+		var resp []interface{}
+		if err := conn.Do(radix.Cmd(&resp, "BLPOP", "dummy", "0")); err != nil {
+			var message []string
+			if err := conn.Do(radix.Cmd(&message, "BLPOP", "dummy", "1")); err != nil {
+				var rawResp interface{}
+				if err := conn.Do(radix.Cmd(&rawResp, "PING")); err != nil {
+					return err
+				}
+
+				time.Sleep(100 * time.Millisecond)
+				continue
 			}
 		}
-		mutex.Unlock()
+		break
+	}
+
+	return nil
+}
+
+func StartWebSocketBroadcasterPolling() {
+	var lastDogCount, lastCatCount int64 = -1, -1
+
+	for {
+		var dogCount, catCount int64
+
+		RedisPool.Do(radix.Cmd(&dogCount, "GET", "dog_count"))
+		RedisPool.Do(radix.Cmd(&catCount, "GET", "cat_count"))
+
+		if dogCount != lastDogCount || catCount != lastCatCount {
+			data := map[string]int64{
+				"dog": dogCount,
+				"cat": catCount,
+			}
+
+			mutex.Lock()
+			for client := range clients {
+				err := client.WriteJSON(data)
+				if err != nil {
+					client.Close()
+					delete(clients, client)
+				}
+			}
+			mutex.Unlock()
+
+			lastDogCount = dogCount
+			lastCatCount = catCount
+		}
+
+		time.Sleep(200 * time.Millisecond)
 	}
 }
