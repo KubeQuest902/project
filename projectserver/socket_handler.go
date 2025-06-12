@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -47,21 +48,33 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func sendCurrentCounts(conn *websocket.Conn) {
-	var dogCount, catCount int64
+	var dogCount, catCount string
 
 	err := RedisPool.Do(radix.Cmd(&dogCount, "GET", "dog_count"))
-	if err != nil {
-		dogCount = 0
+	if err != nil || dogCount == "" {
+		dogCount = "0"
 	}
 
 	err = RedisPool.Do(radix.Cmd(&catCount, "GET", "cat_count"))
-	if err != nil {
-		catCount = 0
+	if err != nil || catCount == "" {
+		catCount = "0"
+	}
+
+	var dogCountInt, catCountInt int64
+	if dogCount != "" {
+		if val, err := strconv.ParseInt(dogCount, 10, 64); err == nil {
+			dogCountInt = val
+		}
+	}
+	if catCount != "" {
+		if val, err := strconv.ParseInt(catCount, 10, 64); err == nil {
+			catCountInt = val
+		}
 	}
 
 	data := map[string]int64{
-		"dog": dogCount,
-		"cat": catCount,
+		"dog": dogCountInt,
+		"cat": catCountInt,
 	}
 
 	conn.WriteJSON(data)
@@ -126,11 +139,29 @@ func subscribeAndListen() error {
 func StartWebSocketBroadcasterPolling() {
 	var lastDogCount, lastCatCount int64 = -1, -1
 
+	log.Println("Starting WebSocket broadcaster with polling...")
+
 	for {
+		var dogCountStr, catCountStr string
 		var dogCount, catCount int64
 
-		RedisPool.Do(radix.Cmd(&dogCount, "GET", "dog_count"))
-		RedisPool.Do(radix.Cmd(&catCount, "GET", "cat_count"))
+		err := RedisPool.Do(radix.Cmd(&dogCountStr, "GET", "dog_count"))
+		if err != nil || dogCountStr == "" {
+			dogCount = 0
+		} else {
+			if val, err := strconv.ParseInt(dogCountStr, 10, 64); err == nil {
+				dogCount = val
+			}
+		}
+
+		err = RedisPool.Do(radix.Cmd(&catCountStr, "GET", "cat_count"))
+		if err != nil || catCountStr == "" {
+			catCount = 0
+		} else {
+			if val, err := strconv.ParseInt(catCountStr, 10, 64); err == nil {
+				catCount = val
+			}
+		}
 
 		if dogCount != lastDogCount || catCount != lastCatCount {
 			data := map[string]int64{
@@ -138,7 +169,10 @@ func StartWebSocketBroadcasterPolling() {
 				"cat": catCount,
 			}
 
+			log.Printf("Broadcasting update: %+v", data)
+
 			mutex.Lock()
+			clientCount := len(clients)
 			for client := range clients {
 				err := client.WriteJSON(data)
 				if err != nil {
@@ -147,6 +181,8 @@ func StartWebSocketBroadcasterPolling() {
 				}
 			}
 			mutex.Unlock()
+
+			log.Printf("Broadcasted to %d clients", clientCount)
 
 			lastDogCount = dogCount
 			lastCatCount = catCount
